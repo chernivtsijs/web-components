@@ -1,31 +1,23 @@
 "use strict"
 
-class FromNow extends HTMLTimeElement
+define("from-now",
 {
-	get short()
-	{
-		return "short" in this.dataset
-	}
-
-	set short(value)
-	{
-		if (value) this.dataset.short = ""
-		else delete this.dataset.short
-	}
-
-	connectedCallback()
+	extends: "time",
+	props: { short: Boolean },
+	
+	connect()
 	{
 		let attr = this.closest("[lang]")
 
 		this._lang = attr ? attr.lang : "en"
-	}
+	},
 
-	disconnectedCallback()
+	disconnect()
 	{
 		clearTimeout(this._id)
-	}
+	},
 
-	attributeChangedCallback()
+	attrChange()
 	{
 		let { short } = this
 		let lang = this._lang + (short ? "-short" : "")
@@ -33,7 +25,7 @@ class FromNow extends HTMLTimeElement
 
 		this.title = this._date.format(short ? "lll" : "LLLL")
 		this.render()
-	}
+	},
 
 	render()
 	{
@@ -47,16 +39,5 @@ class FromNow extends HTMLTimeElement
 			this.textContent = date.fromNow()
 			this.render()
 		},  timeout(date))
-	}
-}
-
-FromNow.observedAttributes =
-[
-	"datetime",
-	"data-short",
-]
-
-customElements.define("from-now", FromNow,
-{
-	extends: "time",
+	},
 })
