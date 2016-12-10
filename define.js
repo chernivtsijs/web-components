@@ -2,78 +2,109 @@
 
 const define = (tag, params) =>
 {
-    let extendsBuiltIn = params.extends
-    let name = extendsBuiltIn || tag
-    let parent = document.createElement(name).constructor
+    const states = new WeakMap
+    const proxies = new WeakMap
 
-    class custom extends parent
+    const dasherize = string => string.replace(/([a-z])(?=[A-Z])/g, "$1-")
+    const isPrivate = key => typeof key == "string" && key.startsWith("_")
+
+    const handler =
     {
-        constructor()
+        get(target, key)
         {
-            super()
+            if (isPrivate(key))
+                target = states.get(target)
 
-            if (params.upgrade)
-                params.upgrade.call(this)
+            let value = target[key]
+
+            return typeof value == "function"
+                ? value.bind(target)
+                : value
+        },
+
+        set(target, key, value)
+        {
+            if (isPrivate(key))
+                target = states.get(target)
+
+            target[key] = value
+
+            return true
+        },
+    }
+
+    // let parent = document.createElement(params.extends).constructor
+    let parent = HTMLTimeElement
+
+    class fn extends parent
+    {
+        connectedCallback()
+        {
+            states.set(this, Object.create(null))
+            proxies.set(this, new Proxy(this, handler))
+
+            params.connect.call(proxies.get(this))
+        }
+
+        disconnectedCallback()
+        {
+            params.disconnect.call(proxies.get(this))
+        }
+
+        attributeChangedCallback()
+        {
+            params.attrChange.call(proxies.get(this))
         }
     }
 
-    let proto = custom.prototype
-    let attrs = custom.observedAttributes = extendsBuiltIn
-        ? Object.keys(parent.prototype).map(attr => attr.toLowerCase())
-        : []
+    let attrs = fn.observedAttributes = []
 
-    for (let [ key, value ] of Object.entries(params))
+    for (let [ key, value ] of Object.entries(params.props))
     {
-        switch (key)
+        let isData = !(key in fn.prototype)
+        let desc =
         {
-            case "connect":
-                proto.connectedCallback = value
+            enumerable: true,
+            configurable: true,
+        }
+
+        switch (value)
+        {
+            case Boolean:
+                desc.get = isData
+                    ? function() { return key in this.dataset }
+                    : function() { return this.hasAttribute(key) }
+
+                desc.set = isData
+                    ? function(value) { value ? this.dataset[key] = "" : delete this.dataset[key] }
+                    : function(value) { value ? this.setAttribute(key, "") : this.removeAttribute(key) }
+
                 break
 
-            case "disconnect":
-                proto.disconnectedCallback = value
-                break
+            case Date:
+                desc.get = isData
+                    ? function() { return new Date(this.dataset[key]) }
+                    : function() { return new Date(this.getAttribute(key)) }
 
-            case "attrChange":
-                proto.attributeChangedCallback = value
+                desc.set = isData
+                    ? function(value) { this.dataset[key] = value instanceof Date ? value.toISOString() : value }
+                    : function(value) { this.setAttribute(key, value instanceof Date ? value.toISOString() : value) }
+
                 break
         }
 
-        proto[key] = value
+        let attr = isData ? "data-" + dasherize(key) : key
+        attrs.push(attr.toLowerCase())
+
+        Object.defineProperty(fn.prototype, key, desc)
     }
 
-    if (params.props)
-    {
-        for (let [ key, value ] of Object.entries(params.props))
-        {
-            attrs.push(extendsBuiltIn ? `data-${key}` : key)
-
-            let desc =
-            {
-                enumerable: true,
-                configurable: true,
-            }
-
-            switch (value)
-            {
-                case Boolean:
-                    desc.get = extendsBuiltIn
-                        ? function() { return key in this.dataset }
-                        : function() { return this.hasAttribute(key) }
-
-                    desc.set = extendsBuiltIn
-                        ? function(value) { value ? this.dataset[key] = "" : delete this.dataset[key] }
-                        : function(value) { value ? this.setAttribute(key, "") : this.removeAttribute(key) }
-
-                    break
-            }
-
-            Object.defineProperty(proto, key, desc)
-        }
-    }
-
-    customElements.define(tag, custom,
+    customElements.define(tag, fn,
     {
         extends: params.extends,
     })
+
+    delete fn.prototype.connectedCallback
+    delete fn.prototype.disconnectedCallback
+    delete fn.prototype.attributeChangedCallback
 }
