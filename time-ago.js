@@ -41,12 +41,21 @@ class TimeAgo extends HTMLTimeElement
 
     attributeChangedCallback()
     {
+        clearTimeout(this._id)
+
         let { isShort } = this
         let lang = this._lang + (isShort ? "-short" : "")
         let date = moment(this.dateTime).locale(lang)
 
         this.title = date.format(isShort ? "lll" : "LLLL")
-        this.textContent = date.fromNow()
+
+        const render = () =>
+        {
+            this.textContent = date.fromNow()
+            this._id = setTimeout(render, timeout(date))
+        }
+
+        render()
     }
 }
 
