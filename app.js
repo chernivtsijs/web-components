@@ -1,35 +1,49 @@
 "use strict"
 
-class App extends React.Component
+class Comp extends React.Component
 {
-	constructor()
-	{
-		super(...arguments)
+    constructor()
+    {
+        super(...arguments)
 
-		let date = new Date
+        this.state =
+        {
+            date: new Date,
+        }
 
-		this.state = { date }
-		this.handleClick = ({ target }) =>
-		{
-			date.setTime(target.valueAsNumber)
-			this.forceUpdate()
-		}
-	}
+        this.numberChange = ({ target }) =>
+        {
+            let date = target.valueAsDate
 
-	render()
-	{
-		let { date } = this.state
-		let iso = date.toISOString()
+            this.setState({ date })
+        }
 
-		return <section>
-			<h3>Web Components Workshop</h3>
-			<input type="number" step="5e4" onChange={this.handleClick} value={+date} />
-			<ul>
-				<li><time is="from-now" dateTime={iso} /></li>
-				<li><time is="from-now" dateTime={iso} data-short /></li>
-			</ul>
-		</section>
-	}
+        this.checkChange = ({ target }) =>
+        {
+            let isShort = target.checked ? "" : null
+
+            this.setState({ isShort })
+        }
+    }
+
+    render()
+    {
+        let { date, isShort } = this.state
+
+        return <div>
+            <hr />
+            <input type="checkbox" onChange={this.checkChange} />
+            short
+            <br />
+            <input type="date" onChange={this.numberChange} value={+date} />
+            <br />
+            <time is="time-ago" dateTime={date.toISOString()} data-is-short={isShort} />
+        </div>
+    }
 }
 
-ReactDOM.render(<App />, document.querySelector("main"))
+ReactDOM.render(<section>
+    <h3>Web Components Workshop</h3>
+    <Comp />
+    <Comp />
+</section>, document.querySelector("main"))

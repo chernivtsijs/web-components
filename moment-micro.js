@@ -33,14 +33,14 @@ moment.locale("ru-short",
     },
 })
 
-const th = moment.relativeTimeThreshold
-const min = 6e4
-const hour = 60 * min
-const day = 24 * hour
-const month = 30 * day
-
 const timeout = date =>
 {
+    let th = moment.relativeTimeThreshold
+    let min = 6e4
+    let hour = 60 * min
+    let day = 24 * hour
+    let month = 30 * day
+
     let d = Math.abs(Date.now() - date)
     if (d < th("m") * min) return min
     if (d < th("h") * hour) return hour

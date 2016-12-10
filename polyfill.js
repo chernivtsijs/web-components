@@ -1,8 +1,21 @@
+class HTMLTimeElement extends HTMLElement
+{
+    get dateTime()
+    {
+        return this.getAttribute("datetime") || ""
+    }
+
+    set dateTime(value)
+    {
+        return this.setAttribute("datetime", value)
+    }
+}
+
 (function()
 {
     "use strict"
 
-    if ("customElements" in window) return
+    // if ("customElements" in window) return
 
     function CustomElementRegistry()
     {
@@ -131,8 +144,8 @@
         {
             var parentTag = `${options.extends}`
 
-            if (isUnknown(parentTag))
-                throw new DOMException("NotSupportedError") 
+            // if (isUnknown(parentTag))
+            //     throw new DOMException("NotSupportedError") 
 
             selector = `${parentTag}[is=${name}]`
         }

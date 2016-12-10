@@ -9,10 +9,163 @@
 <script src=vendor/react-dom.js></script>
 <script src=vendor/babel.js></script>
 
-<main></main>
-
 <script src=moment-micro.js></script>
 <script src=polyfill.js></script>
-<script src=define.js></script>
-<script src=from-now.js></script>
-<script src=app.js type=text/babel></script>
+<script src=time-ago.js></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<main>
+    <h3>Web Components Workshop</h3>
+
+    <div id=mount>
+        <input type=checkbox>
+        <input type=date>
+        <time is=time-ago></time>
+    </div>
+</main>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+
+"use strict"
+
+const $ = sel => document.querySelector(sel)
+
+let $check = $("input[type=checkbox]")
+let $date = $("input[type=date]")
+let $time = $("time[is=time-ago]")
+
+$date.valueAsDate =
+$time.dateTime = new Date
+
+$date.addEventListener("input", () =>
+{
+    $time.dateTime = $date.valueAsDate
+})
+
+$check.addEventListener("change", () =>
+{
+    $time.isShort = $check.checked
+})
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script type=text/babel>
+
+"use strict"
+
+class Comp extends React.Component
+{
+    constructor()
+    {
+        super(...arguments)
+
+        this.state =
+        {
+            date: new Date,
+        }
+
+        this.checkChange = ({ target }) =>
+        {
+            let isShort = target.checked ? "" : null
+
+            this.setState({ isShort })
+        }
+
+        this.dateChange = ({ target }) =>
+        {
+            let date = target.valueAsDate
+
+            this.setState({ date })
+        }
+    }
+
+    render()
+    {
+        let { date, isShort } = this.state
+
+        return <div>
+            <hr />
+            <input type="checkbox" onChange={this.checkChange} />
+            short
+            <br />
+            <input type="date" onChange={this.dateChange} />
+            <br />
+            <time is="time-ago" dateTime={date.toISOString()} data-is-short={isShort} />
+        </div>
+    }
+}
+
+if (false) ReactDOM.render(<div>
+    <Comp />
+    <Comp />
+</div>, document.querySelector("#mount"))
+
+</script>
